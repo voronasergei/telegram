@@ -86,6 +86,6 @@ async def tick(bot):
 
 def start_scheduler(bot):
     sched = AsyncIOScheduler()
-    sched.add_job(tick, "interval", minutes=10, args=[bot], next_run_time=None)
+    sched.add_job(tick, "interval", minutes=10, args=[bot])
     sched.start()
     return sched

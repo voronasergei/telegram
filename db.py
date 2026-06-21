@@ -3,7 +3,9 @@
 import time
 import aiosqlite
 
-DB_PATH = "club_bot.db"
+import config
+
+DB_PATH = config.DB_PATH
 
 FIELDS = [
     "age", "pain", "plan_efir", "plan_block", "time_opt", "goal_phrase",
