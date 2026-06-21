@@ -14,6 +14,9 @@ GIFT_URL = os.getenv("GIFT_URL", "")  # ссылка на файл чек-лис
 # напр. DB_PATH=/data/club_bot.db — иначе база обнуляется при передеплое.
 DB_PATH = os.getenv("DB_PATH", "club_bot.db")
 
+# ID администраторов (через запятую), кому доступна команда /stats.
+ADMIN_IDS = {int(x) for x in os.getenv("ADMIN_IDS", "").replace(" ", "").split(",") if x}
+
 def site_link() -> str:
     sep = "&" if "?" in SITE_URL else "?"
     return f"{SITE_URL}{sep}{UTM}" if UTM else SITE_URL

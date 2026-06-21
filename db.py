@@ -60,3 +60,25 @@ async def all_active() -> list:
         cur = await db.execute("SELECT * FROM users WHERE converted=0")
         rows = await cur.fetchall()
         return [dict(r) for r in rows]
+
+async def stats() -> dict:
+    """Сводка по воронке: счётчики этапов + разбивка по возрасту."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("""
+            SELECT
+              COUNT(*) AS total,
+              COALESCE(SUM(quiz_done), 0) AS completed,
+              COALESCE(SUM(reached_offer_at IS NOT NULL), 0) AS reached_offer,
+              COALESCE(SUM(clicked_cta_at IS NOT NULL), 0) AS clicked_cta,
+              COALESCE(SUM(gift_or_question_at IS NOT NULL), 0) AS gift_or_question,
+              COALESCE(SUM(converted), 0) AS converted
+            FROM users
+        """)
+        overall = dict(await cur.fetchone())
+        cur2 = await db.execute(
+            "SELECT age, COUNT(*) AS n FROM users WHERE age IS NOT NULL "
+            "GROUP BY age ORDER BY age"
+        )
+        by_age = {r["age"]: r["n"] for r in await cur2.fetchall()}
+        return {"overall": overall, "by_age": by_age}

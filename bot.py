@@ -3,7 +3,7 @@ import asyncio
 import time
 import logging
 from aiogram import Bot, Dispatcher, Router, F
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 import config
@@ -177,6 +177,38 @@ async def on_resume(cq: CallbackQuery):
     u = await db.get(cq.from_user.id)
     await cq.answer()
     await send_stage(cq.message, u)
+
+
+@router.message(Command("myid"))
+async def cmd_myid(m: Message):
+    await m.answer(f"Ваш Telegram ID: {m.from_user.id}")
+
+
+@router.message(Command("stats"))
+async def cmd_stats(m: Message):
+    if m.from_user.id not in config.ADMIN_IDS:
+        return  # не админ — молча игнорируем
+    s = await db.stats()
+    o = s["overall"]
+    total = o["total"] or 0
+
+    def pct(x):
+        return f" ({round(100 * x / total)}%)" if total else ""
+
+    by_age = s["by_age"]
+    age_lines = "\n".join(f"• {a}: {by_age.get(a, 0)}" for a in t.AGES)
+    text = (
+        "📊 Статистика воронки\n\n"
+        f"👥 Всего пользователей: {total}\n"
+        f"🧩 Прошли квиз: {o['completed']}{pct(o['completed'])}\n"
+        f"🎯 Дошли до оффера: {o['reached_offer']}{pct(o['reached_offer'])}\n"
+        f"🔗 Нажали «Вступить»: {o['clicked_cta']}{pct(o['clicked_cta'])}\n"
+        f"🎁 Чек-лист / вопрос: {o['gift_or_question']}{pct(o['gift_or_question'])}\n"
+        f"💚 Отметили «Я уже вступил»: {o['converted']}{pct(o['converted'])}\n\n"
+        "По возрасту:\n"
+        f"{age_lines}"
+    )
+    await m.answer(text)
 
 
 @router.message(F.text)
